@@ -3,16 +3,12 @@
   "title": "State",
   "type": "object",
   "required": [
-    "accepted_token",
     "admin",
     "contract_address",
     "viewing_key",
     "withdrawal_allowed_from"
   ],
   "properties": {
-    "accepted_token": {
-      "$ref": "#/definitions/SecretContract"
-    },
     "admin": {
       "$ref": "#/definitions/HumanAddr"
     },
@@ -31,21 +27,6 @@
   "definitions": {
     "HumanAddr": {
       "type": "string"
-    },
-    "SecretContract": {
-      "type": "object",
-      "required": [
-        "address",
-        "contract_hash"
-      ],
-      "properties": {
-        "address": {
-          "$ref": "#/definitions/HumanAddr"
-        },
-        "contract_hash": {
-          "type": "string"
-        }
-      }
     }
   }
 }

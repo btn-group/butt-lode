@@ -3,14 +3,10 @@
   "title": "InitMsg",
   "type": "object",
   "required": [
-    "accepted_token",
     "viewing_key",
     "withdrawal_allowed_from"
   ],
   "properties": {
-    "accepted_token": {
-      "$ref": "#/definitions/SecretContract"
-    },
     "viewing_key": {
       "type": "string"
     },
@@ -18,26 +14,6 @@
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
-    }
-  },
-  "definitions": {
-    "HumanAddr": {
-      "type": "string"
-    },
-    "SecretContract": {
-      "type": "object",
-      "required": [
-        "address",
-        "contract_hash"
-      ],
-      "properties": {
-        "address": {
-          "$ref": "#/definitions/HumanAddr"
-        },
-        "contract_hash": {
-          "type": "string"
-        }
-      }
     }
   }
 }
