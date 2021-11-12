@@ -16,11 +16,28 @@
           "properties": {
             "address": {
               "$ref": "#/definitions/HumanAddr"
-            },
-            "padding": {
-              "type": [
-                "string",
-                "null"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "nominate_new_admin"
+      ],
+      "properties": {
+        "nominate_new_admin": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                {
+                  "type": "null"
+                }
               ]
             }
           }
