@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use cw_butt_lode::msg::{BalanceResponse, ConfigResponse, HandleMsg, InitMsg, QueryMsg};
+use cw_butt_lode::msg::{ConfigResponse, HandleMsg, InitMsg, QueryMsg};
 use cw_butt_lode::state::State;
 
 fn main() {
@@ -16,6 +16,5 @@ fn main() {
     export_schema(&schema_for!(HandleMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(State), &out_dir);
-    export_schema(&schema_for!(BalanceResponse), &out_dir);
     export_schema(&schema_for!(ConfigResponse), &out_dir);
 }
