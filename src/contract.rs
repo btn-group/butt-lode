@@ -14,7 +14,9 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<InitResponse> {
     let state = State {
         admin: env.message.sender,
-        viewing_key: msg.viewing_key.clone(),
+        admin_change_allowed_from: u64::MAX,
+        new_admin_nomination: None,
+        viewing_key: msg.viewing_key,
         withdrawal_allowed_from: msg.withdrawal_allowed_from,
     };
 
@@ -33,6 +35,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::ChangeAdmin { address, .. } => change_admin(deps, env, address),
+        HandleMsg::NominateNewAdmin { address } => nominate_new_admin(deps, env, address),
     }
 }
 
@@ -57,6 +60,28 @@ fn change_admin<S: Storage, A: Api, Q: Querier>(
     }
 
     state.admin = address;
+    config(&mut deps.storage).save(&state)?;
+
+    Ok(HandleResponse {
+        messages: vec![],
+        log: vec![],
+        data: None,
+    })
+}
+
+fn nominate_new_admin<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    address: Option<HumanAddr>,
+) -> StdResult<HandleResponse> {
+    let mut state = config_read(&deps.storage).load()?;
+    // Ensure that admin is calling this
+    if env.message.sender != state.admin {
+        return Err(StdError::Unauthorized { backtrace: None });
+    }
+
+    state.new_admin_nomination = address;
+    state.admin_change_allowed_from = env.block.time + 432_000;
     config(&mut deps.storage).save(&state)?;
 
     Ok(HandleResponse {
@@ -109,7 +134,6 @@ mod tests {
 
         let handle_msg = HandleMsg::ChangeAdmin {
             address: HumanAddr("bob".to_string()),
-            padding: None,
         };
         let handle_result = handle(&mut deps, mock_env(MOCK_ADMIN, &[]), handle_msg);
         assert!(

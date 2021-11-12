@@ -14,6 +14,8 @@ pub struct SecretContract {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub admin: HumanAddr,
+    pub admin_change_allowed_from: u64,
+    pub new_admin_nomination: Option<HumanAddr>,
     pub viewing_key: String,
     pub withdrawal_allowed_from: u64,
 }
