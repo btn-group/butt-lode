@@ -24,22 +24,13 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     config(&mut deps.storage).save(&state)?;
 
     // https://github.com/enigmampc/secret-toolkit/tree/master/packages/snip20
-    let messages = vec![
-        snip20::register_receive_msg(
-            env.contract_code_hash.clone(),
-            None,
-            1,
-            msg.accepted_token.contract_hash.clone(),
-            msg.accepted_token.address.clone(),
-        )?,
-        snip20::set_viewing_key_msg(
-            msg.viewing_key,
-            None,
-            RESPONSE_BLOCK_SIZE,
-            msg.accepted_token.contract_hash,
-            msg.accepted_token.address,
-        )?,
-    ];
+    let messages = vec![snip20::set_viewing_key_msg(
+        msg.viewing_key,
+        None,
+        RESPONSE_BLOCK_SIZE,
+        msg.accepted_token.contract_hash,
+        msg.accepted_token.address,
+    )?];
 
     Ok(InitResponse {
         messages,
