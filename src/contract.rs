@@ -14,7 +14,6 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<InitResponse> {
     let state = State {
         admin: env.message.sender,
-        contract_address: env.contract.address,
         viewing_key: msg.viewing_key.clone(),
         withdrawal_allowed_from: msg.withdrawal_allowed_from,
     };
