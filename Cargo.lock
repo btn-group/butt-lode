@@ -168,7 +168,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-timelock-withdrawal-smart-contract"
+name = "cw-butt-lode"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
