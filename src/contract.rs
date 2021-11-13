@@ -133,30 +133,44 @@ mod tests {
         (init(&mut deps, env.clone(), msg), deps)
     }
 
-    // #[test]
-    // fn test_change_admin() {
-    //     let (init_result, mut deps) = init_helper();
+    fn mock_user_address() -> HumanAddr {
+        HumanAddr::from("bob")
+    }
 
-    //     assert!(
-    //         init_result.is_ok(),
-    //         "Init failed: {}",
-    //         init_result.err().unwrap()
-    //     );
+    #[test]
+    fn test_nominate_new_admin() {
+        let (_init_result, mut deps) = init_helper();
+        let handle_msg = HandleMsg::NominateNewAdmin {
+            address: Some(mock_user_address()),
+        };
 
-    //     let handle_msg = HandleMsg::ChangeAdmin {
-    //         address: HumanAddr("bob".to_string()),
-    //     };
-    //     let handle_result = handle(&mut deps, mock_env(MOCK_ADMIN, &[]), handle_msg);
-    //     assert!(
-    //         handle_result.is_ok(),
-    //         "handle() failed: {}",
-    //         handle_result.err().unwrap()
-    //     );
+        // when nomination is made by a non-admin
+        let handle_result = handle(
+            &mut deps,
+            mock_env(mock_user_address(), &[]),
+            handle_msg.clone(),
+        );
+        assert_eq!(
+            handle_result.unwrap_err(),
+            StdError::Unauthorized { backtrace: None }
+        );
 
-    //     let res = query(&deps, QueryMsg::Config {}).unwrap();
-    //     let value: ConfigResponse = from_binary(&res).unwrap();
-    //     assert_eq!(value.admin, HumanAddr("bob".to_string()));
-    // }
+        // when nomination is made by an admin
+        let handle_result = handle(&mut deps, mock_env(MOCK_ADMIN, &[]), handle_msg);
+        assert!(
+            handle_result.is_ok(),
+            "handle() failed: {}",
+            handle_result.err().unwrap()
+        );
+
+        let res = query(&deps, QueryMsg::Config {}).unwrap();
+        let value: ConfigResponse = from_binary(&res).unwrap();
+        assert_eq!(value.new_admin_nomination, Some(mock_user_address()));
+        assert_eq!(
+            value.admin_change_allowed_from,
+            mock_env(MOCK_ADMIN, &[]).block.time + (60 * 60 * 24 * 5)
+        );
+    }
 
     #[test]
     fn test_public_config() {
