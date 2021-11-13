@@ -11,7 +11,7 @@ pub struct InitMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
-    ChangeAdmin { address: HumanAddr },
+    ChangeAdmin {},
     NominateNewAdmin { address: Option<HumanAddr> },
 }
 
@@ -24,5 +24,8 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigResponse {
     pub admin: HumanAddr,
+    pub admin_change_allowed_from: u64,
+    pub new_admin_nomination: Option<HumanAddr>,
+    pub viewing_key: String,
     pub withdrawal_allowed_from: u64,
 }

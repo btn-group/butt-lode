@@ -4,11 +4,31 @@
   "type": "object",
   "required": [
     "admin",
+    "admin_change_allowed_from",
+    "viewing_key",
     "withdrawal_allowed_from"
   ],
   "properties": {
     "admin": {
       "$ref": "#/definitions/HumanAddr"
+    },
+    "admin_change_allowed_from": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "new_admin_nomination": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/HumanAddr"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "viewing_key": {
+      "type": "string"
     },
     "withdrawal_allowed_from": {
       "type": "integer",
