@@ -9,15 +9,7 @@
       ],
       "properties": {
         "change_admin": {
-          "type": "object",
-          "required": [
-            "address"
-          ],
-          "properties": {
-            "address": {
-              "$ref": "#/definitions/HumanAddr"
-            }
-          }
+          "type": "object"
         }
       }
     },
