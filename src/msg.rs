@@ -1,4 +1,5 @@
-use cosmwasm_std::HumanAddr;
+use crate::state::SecretContract;
+use cosmwasm_std::{HumanAddr, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -14,9 +15,12 @@ pub enum HandleMsg {
     NominateNewAdmin {
         address: Option<HumanAddr>,
     },
+    SendToken {
+        amount: Uint128,
+        token: SecretContract,
+    },
     SetViewingKeyForSnip20 {
-        address: HumanAddr,
-        contract_hash: String,
+        token: SecretContract,
     },
 }
 
@@ -33,4 +37,10 @@ pub struct ConfigResponse {
     pub new_admin_nomination: Option<HumanAddr>,
     pub receivable_address: Option<HumanAddr>,
     pub viewing_key: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ReceiveMsg {
+    ReceiveFromButtLode {},
 }

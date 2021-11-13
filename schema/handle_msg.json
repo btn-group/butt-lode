@@ -39,21 +39,40 @@
     {
       "type": "object",
       "required": [
+        "send_token"
+      ],
+      "properties": {
+        "send_token": {
+          "type": "object",
+          "required": [
+            "amount",
+            "token"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "token": {
+              "$ref": "#/definitions/SecretContract"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
         "set_viewing_key_for_snip20"
       ],
       "properties": {
         "set_viewing_key_for_snip20": {
           "type": "object",
           "required": [
-            "address",
-            "contract_hash"
+            "token"
           ],
           "properties": {
-            "address": {
-              "$ref": "#/definitions/HumanAddr"
-            },
-            "contract_hash": {
-              "type": "string"
+            "token": {
+              "$ref": "#/definitions/SecretContract"
             }
           }
         }
@@ -62,6 +81,24 @@
   ],
   "definitions": {
     "HumanAddr": {
+      "type": "string"
+    },
+    "SecretContract": {
+      "type": "object",
+      "required": [
+        "address",
+        "contract_hash"
+      ],
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/HumanAddr"
+        },
+        "contract_hash": {
+          "type": "string"
+        }
+      }
+    },
+    "Uint128": {
       "type": "string"
     }
   }

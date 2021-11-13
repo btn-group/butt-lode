@@ -1,8 +1,9 @@
-use crate::msg::{ConfigResponse, HandleMsg, InitMsg, QueryMsg};
-use crate::state::{config, config_read, State};
+use crate::authorize::authorize;
+use crate::msg::{ConfigResponse, HandleMsg, InitMsg, QueryMsg, ReceiveMsg};
+use crate::state::{config, config_read, SecretContract, State};
 use cosmwasm_std::{
     to_binary, Api, Binary, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier,
-    StdError, StdResult, Storage,
+    StdError, StdResult, Storage, Uint128,
 };
 use secret_toolkit::snip20;
 
@@ -37,10 +38,8 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     match msg {
         HandleMsg::ChangeAdmin {} => change_admin(deps, env),
         HandleMsg::NominateNewAdmin { address } => nominate_new_admin(deps, env, address),
-        HandleMsg::SetViewingKeyForSnip20 {
-            address,
-            contract_hash,
-        } => set_viewing_key_for_snip20(deps, address, contract_hash),
+        HandleMsg::SendToken { amount, token } => send_token(deps, env, amount, token),
+        HandleMsg::SetViewingKeyForSnip20 { token } => set_viewing_key_for_snip20(deps, token),
     }
 }
 
@@ -60,18 +59,19 @@ fn change_admin<S: Storage, A: Api, Q: Querier>(
     let mut state = config_read(&deps.storage).load()?;
     // Ensure that nominated new admin is calling this
     if state.new_admin_nomination.is_some() {
-        if env.message.sender == state.new_admin_nomination.clone().unwrap() {
-            if env.block.time > state.admin_change_allowed_from {
-                state.admin = env.message.sender;
-                config(&mut deps.storage).save(&state)?;
-            } else {
-                return Err(StdError::generic_err(format!(
-                    "Current time: {}. Admin change allowed from: {}.",
-                    env.block.time, state.admin_change_allowed_from
-                )));
-            }
+        authorize(
+            state.new_admin_nomination.clone().unwrap(),
+            env.message.sender.clone(),
+        )?;
+
+        if env.block.time > state.admin_change_allowed_from {
+            state.admin = env.message.sender;
+            config(&mut deps.storage).save(&state)?;
         } else {
-            return Err(StdError::Unauthorized { backtrace: None });
+            return Err(StdError::generic_err(format!(
+                "Current time: {}. Admin change allowed from: {}.",
+                env.block.time, state.admin_change_allowed_from
+            )));
         }
     } else {
         return Err(StdError::generic_err(format!("No new admin nomination.")));
@@ -91,9 +91,7 @@ fn nominate_new_admin<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     let mut state = config_read(&deps.storage).load()?;
     // Ensure that admin is calling this
-    if env.message.sender != state.admin {
-        return Err(StdError::Unauthorized { backtrace: None });
-    }
+    authorize(state.admin.clone(), env.message.sender)?;
 
     state.new_admin_nomination = address;
     state.admin_change_allowed_from = env.block.time + 432_000;
@@ -119,20 +117,42 @@ fn public_config<S: Storage, A: Api, Q: Querier>(
     })
 }
 
-fn set_viewing_key_for_snip20<S: Storage, A: Api, Q: Querier>(
+fn send_token<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
-    address: HumanAddr,
-    contract_hash: String,
+    env: Env,
+    amount: Uint128,
+    token: SecretContract,
 ) -> StdResult<HandleResponse> {
     let state = config_read(&deps.storage).load()?;
+    authorize(state.admin, env.message.sender)?;
 
+    Ok(HandleResponse {
+        messages: vec![snip20::send_msg(
+            state.receivable_address.unwrap(),
+            amount,
+            Some(to_binary(&ReceiveMsg::ReceiveFromButtLode {})?),
+            None,
+            RESPONSE_BLOCK_SIZE,
+            token.contract_hash,
+            token.address,
+        )?],
+        log: vec![],
+        data: None,
+    })
+}
+
+fn set_viewing_key_for_snip20<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    token: SecretContract,
+) -> StdResult<HandleResponse> {
+    let state = config_read(&deps.storage).load()?;
     Ok(HandleResponse {
         messages: vec![snip20::set_viewing_key_msg(
             state.viewing_key,
             None,
             RESPONSE_BLOCK_SIZE,
-            contract_hash,
-            address,
+            token.contract_hash,
+            token.address,
         )?],
         log: vec![],
         data: None,
@@ -159,8 +179,15 @@ mod tests {
         (init(&mut deps, env.clone(), msg), deps)
     }
 
+    fn mock_token() -> SecretContract {
+        SecretContract {
+            address: HumanAddr::from("token-address"),
+            contract_hash: "token-contract-hash".to_string(),
+        }
+    }
+
     fn mock_user_address() -> HumanAddr {
-        HumanAddr::from("bob")
+        HumanAddr::from("gary")
     }
 
     #[test]
@@ -271,8 +298,7 @@ mod tests {
 
         // = * It calls viewing key for snip 20
         let handle_msg = HandleMsg::SetViewingKeyForSnip20 {
-            address: HumanAddr::from("token-address"),
-            contract_hash: "token-contract-hash".to_string(),
+            token: mock_token(),
         };
         let handle_result = handle(&mut deps, mock_env("user", &[]), handle_msg);
         let handle_result_unwrapped = handle_result.unwrap();
@@ -282,8 +308,8 @@ mod tests {
                 "Do not hold on to possessions you no longer need.".to_string(),
                 None,
                 RESPONSE_BLOCK_SIZE,
-                "token-contract-hash".to_string(),
-                HumanAddr::from("token-address"),
+                mock_token().contract_hash,
+                mock_token().address,
             )
             .unwrap()],
         );
