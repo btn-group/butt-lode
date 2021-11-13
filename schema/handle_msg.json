@@ -35,6 +35,29 @@
           }
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "set_viewing_key_for_snip20"
+      ],
+      "properties": {
+        "set_viewing_key_for_snip20": {
+          "type": "object",
+          "required": [
+            "address",
+            "contract_hash"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/HumanAddr"
+            },
+            "contract_hash": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
   ],
   "definitions": {
