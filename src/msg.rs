@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
     pub viewing_key: String,
-    pub withdrawal_allowed_from: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -28,5 +27,4 @@ pub struct ConfigResponse {
     pub new_admin_nomination: Option<HumanAddr>,
     pub receivable_address: Option<HumanAddr>,
     pub viewing_key: String,
-    pub withdrawal_allowed_from: u64,
 }

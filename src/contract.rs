@@ -18,7 +18,6 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         new_admin_nomination: None,
         receivable_address: None,
         viewing_key: msg.viewing_key,
-        withdrawal_allowed_from: msg.withdrawal_allowed_from,
     };
 
     config(&mut deps.storage).save(&state)?;
@@ -112,7 +111,6 @@ fn public_config<S: Storage, A: Api, Q: Querier>(
         new_admin_nomination: state.new_admin_nomination,
         receivable_address: state.receivable_address,
         viewing_key: state.viewing_key,
-        withdrawal_allowed_from: state.withdrawal_allowed_from,
     })
 }
 
@@ -132,7 +130,6 @@ mod tests {
         let mut deps = mock_dependencies(20, &[]);
         let msg = InitMsg {
             viewing_key: "nannofromthegirlfromnowhereisathaidemon?".to_string(),
-            withdrawal_allowed_from: 3,
         };
         (init(&mut deps, env.clone(), msg), deps)
     }
@@ -255,7 +252,6 @@ mod tests {
                 new_admin_nomination: None,
                 receivable_address: None,
                 viewing_key: "nannofromthegirlfromnowhereisathaidemon?".to_string(),
-                withdrawal_allowed_from: 3,
             },
             value
         );
