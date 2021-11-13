@@ -68,6 +68,8 @@ fn change_admin<S: Storage, A: Api, Q: Querier>(
         } else {
             return Err(StdError::Unauthorized { backtrace: None });
         }
+    } else {
+        return Err(StdError::generic_err(format!("No new admin nomination.")));
     }
 
     Ok(HandleResponse {
@@ -135,6 +137,73 @@ mod tests {
 
     fn mock_user_address() -> HumanAddr {
         HumanAddr::from("bob")
+    }
+
+    #[test]
+    fn test_change_admin() {
+        let (_init_result, mut deps) = init_helper();
+
+        // when there is no nominated new admin
+        // * it raises an error
+        let change_admin_msg = HandleMsg::ChangeAdmin {};
+        let handle_result = handle(
+            &mut deps,
+            mock_env(mock_user_address(), &[]),
+            change_admin_msg.clone(),
+        );
+        assert_eq!(
+            handle_result.unwrap_err(),
+            StdError::generic_err(format!("No new admin nomination."))
+        );
+
+        // when there is a nominated admin
+        let handle_msg = HandleMsg::NominateNewAdmin {
+            address: Some(mock_user_address()),
+        };
+        handle(&mut deps, mock_env(MOCK_ADMIN, &[]), handle_msg.clone()).unwrap();
+
+        // = when change of admin is called by the person who is not nominated
+        // = * it raises an error
+        let handle_result = handle(
+            &mut deps,
+            mock_env(MOCK_ADMIN, &[]),
+            change_admin_msg.clone(),
+        );
+        assert_eq!(
+            handle_result.unwrap_err(),
+            StdError::Unauthorized { backtrace: None }
+        );
+
+        // = when change of admin is called by the person who is nominated
+        // == when it is not time to call the change of admin
+        // == * it raises an error
+        let handle_result = handle(
+            &mut deps,
+            mock_env(mock_user_address(), &[]),
+            change_admin_msg.clone(),
+        );
+        assert_eq!(
+            handle_result.unwrap_err(),
+            StdError::generic_err(format!(
+                "Current time: {}. Admin change allowed from: {}.",
+                1571797419,
+                1571797419 + 60 * 60 * 24 * 5
+            ))
+        );
+
+        // == when it is time to call the change of admin
+        let mut state = config_read(&deps.storage).load().unwrap();
+        state.admin_change_allowed_from = 1571797419 - 1;
+        config(&mut deps.storage).save(&state).unwrap();
+        // == * it changes the admin
+        handle(
+            &mut deps,
+            mock_env(mock_user_address(), &[]),
+            change_admin_msg,
+        )
+        .unwrap();
+        let state = config_read(&deps.storage).load().unwrap();
+        assert_eq!(state.admin, mock_user_address());
     }
 
     #[test]
