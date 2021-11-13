@@ -3,17 +3,11 @@
   "title": "InitMsg",
   "type": "object",
   "required": [
-    "viewing_key",
-    "withdrawal_allowed_from"
+    "viewing_key"
   ],
   "properties": {
     "viewing_key": {
       "type": "string"
-    },
-    "withdrawal_allowed_from": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
     }
   }
 }
