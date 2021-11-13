@@ -11,7 +11,13 @@ pub struct InitMsg {
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
     ChangeAdmin {},
-    NominateNewAdmin { address: Option<HumanAddr> },
+    NominateNewAdmin {
+        address: Option<HumanAddr>,
+    },
+    SetViewingKeyForSnip20 {
+        address: HumanAddr,
+        contract_hash: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

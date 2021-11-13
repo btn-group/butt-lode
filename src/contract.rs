@@ -4,6 +4,7 @@ use cosmwasm_std::{
     to_binary, Api, Binary, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier,
     StdError, StdResult, Storage,
 };
+use secret_toolkit::snip20;
 
 pub const RESPONSE_BLOCK_SIZE: usize = 1;
 
@@ -36,6 +37,10 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     match msg {
         HandleMsg::ChangeAdmin {} => change_admin(deps, env),
         HandleMsg::NominateNewAdmin { address } => nominate_new_admin(deps, env, address),
+        HandleMsg::SetViewingKeyForSnip20 {
+            address,
+            contract_hash,
+        } => set_viewing_key_for_snip20(deps, address, contract_hash),
     }
 }
 
@@ -114,6 +119,26 @@ fn public_config<S: Storage, A: Api, Q: Querier>(
     })
 }
 
+fn set_viewing_key_for_snip20<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    address: HumanAddr,
+    contract_hash: String,
+) -> StdResult<HandleResponse> {
+    let state = config_read(&deps.storage).load()?;
+
+    Ok(HandleResponse {
+        messages: vec![snip20::set_viewing_key_msg(
+            state.viewing_key,
+            None,
+            RESPONSE_BLOCK_SIZE,
+            contract_hash,
+            address,
+        )?],
+        log: vec![],
+        data: None,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -129,7 +154,7 @@ mod tests {
         let env = mock_env(MOCK_ADMIN, &[]);
         let mut deps = mock_dependencies(20, &[]);
         let msg = InitMsg {
-            viewing_key: "nannofromthegirlfromnowhereisathaidemon?".to_string(),
+            viewing_key: "Do not hold on to possessions you no longer need.".to_string(),
         };
         (init(&mut deps, env.clone(), msg), deps)
     }
@@ -241,6 +266,30 @@ mod tests {
     }
 
     #[test]
+    fn test_set_viewing_key_for_snip20() {
+        let (_init_result, mut deps) = init_helper();
+
+        // = * It calls viewing key for snip 20
+        let handle_msg = HandleMsg::SetViewingKeyForSnip20 {
+            address: HumanAddr::from("token-address"),
+            contract_hash: "token-contract-hash".to_string(),
+        };
+        let handle_result = handle(&mut deps, mock_env("user", &[]), handle_msg);
+        let handle_result_unwrapped = handle_result.unwrap();
+        assert_eq!(
+            handle_result_unwrapped.messages,
+            vec![snip20::set_viewing_key_msg(
+                "Do not hold on to possessions you no longer need.".to_string(),
+                None,
+                RESPONSE_BLOCK_SIZE,
+                "token-contract-hash".to_string(),
+                HumanAddr::from("token-address"),
+            )
+            .unwrap()],
+        );
+    }
+
+    #[test]
     fn test_public_config() {
         let (_init_result, deps) = init_helper();
         let res = query(&deps, QueryMsg::Config {}).unwrap();
@@ -251,7 +300,7 @@ mod tests {
                 admin_change_allowed_from: u64::MAX,
                 new_admin_nomination: None,
                 receivable_address: None,
-                viewing_key: "nannofromthegirlfromnowhereisathaidemon?".to_string(),
+                viewing_key: "Do not hold on to possessions you no longer need.".to_string(),
             },
             value
         );
