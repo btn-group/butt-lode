@@ -16,6 +16,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         admin: env.message.sender,
         admin_change_allowed_from: u64::MAX,
         new_admin_nomination: None,
+        receivable_address: None,
         viewing_key: msg.viewing_key,
         withdrawal_allowed_from: msg.withdrawal_allowed_from,
     };
@@ -109,6 +110,7 @@ fn public_config<S: Storage, A: Api, Q: Querier>(
         admin: state.admin,
         admin_change_allowed_from: state.admin_change_allowed_from,
         new_admin_nomination: state.new_admin_nomination,
+        receivable_address: state.receivable_address,
         viewing_key: state.viewing_key,
         withdrawal_allowed_from: state.withdrawal_allowed_from,
     })
@@ -251,6 +253,7 @@ mod tests {
                 admin: HumanAddr::from(MOCK_ADMIN),
                 admin_change_allowed_from: u64::MAX,
                 new_admin_nomination: None,
+                receivable_address: None,
                 viewing_key: "nannofromthegirlfromnowhereisathaidemon?".to_string(),
                 withdrawal_allowed_from: 3,
             },
