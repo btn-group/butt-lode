@@ -130,7 +130,7 @@ fn send_token<S: Storage, A: Api, Q: Querier>(
         messages: vec![snip20::send_msg(
             state.receivable_address.unwrap(),
             amount,
-            Some(to_binary(&ReceiveMsg::ReceiveFromButtLode {})?),
+            Some(to_binary(&ReceiveMsg::Deposit {})?),
             None,
             RESPONSE_BLOCK_SIZE,
             token.contract_hash,
