@@ -5,6 +5,7 @@
   "required": [
     "admin",
     "admin_change_allowed_from",
+    "time_delay",
     "viewing_key"
   ],
   "properties": {
@@ -35,6 +36,11 @@
           "type": "null"
         }
       ]
+    },
+    "time_delay": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
     },
     "viewing_key": {
       "type": "string"

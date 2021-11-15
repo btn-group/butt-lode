@@ -19,6 +19,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         admin_change_allowed_from: u64::MAX,
         new_admin_nomination: None,
         receivable_address: msg.receivable_address,
+        time_delay: msg.time_delay,
         viewing_key: msg.viewing_key,
     };
 
@@ -94,7 +95,7 @@ fn nominate_new_admin<S: Storage, A: Api, Q: Querier>(
     authorize(state.admin.clone(), env.message.sender)?;
 
     state.new_admin_nomination = address;
-    state.admin_change_allowed_from = env.block.time + 432_000;
+    state.admin_change_allowed_from = env.block.time + state.time_delay;
     config(&mut deps.storage).save(&state)?;
 
     Ok(HandleResponse {
@@ -175,6 +176,7 @@ mod tests {
         let mut deps = mock_dependencies(20, &[]);
         let msg = InitMsg {
             receivable_address: None,
+            time_delay: 432_000,
             viewing_key: "Do not hold on to possessions you no longer need.".to_string(),
         };
         (init(&mut deps, env.clone(), msg), deps)
