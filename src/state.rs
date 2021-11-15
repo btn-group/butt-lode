@@ -16,7 +16,9 @@ pub struct State {
     pub admin: HumanAddr,
     pub admin_change_allowed_from: u64,
     pub new_admin_nomination: Option<HumanAddr>,
+    pub new_receivable_address_nomination: Option<HumanAddr>,
     pub receivable_address: Option<HumanAddr>,
+    pub receivable_address_change_allowed_from: u64,
     pub time_delay: u64,
     pub viewing_key: String,
 }

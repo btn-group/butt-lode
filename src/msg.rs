@@ -17,6 +17,9 @@ pub enum HandleMsg {
     NominateNewAdmin {
         address: Option<HumanAddr>,
     },
+    NominateNewReceivableAddress {
+        address: Option<HumanAddr>,
+    },
     SendToken {
         amount: Uint128,
         token: SecretContract,
@@ -37,7 +40,10 @@ pub struct ConfigResponse {
     pub admin: HumanAddr,
     pub admin_change_allowed_from: u64,
     pub new_admin_nomination: Option<HumanAddr>,
+    pub new_receivable_address_nomination: Option<HumanAddr>,
     pub receivable_address: Option<HumanAddr>,
+    pub receivable_address_change_allowed_from: u64,
+    pub time_delay: u64,
     pub viewing_key: String,
 }
 

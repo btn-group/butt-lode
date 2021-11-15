@@ -19,6 +19,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         admin_change_allowed_from: u64::MAX,
         new_admin_nomination: None,
         receivable_address: msg.receivable_address,
+        new_receivable_address_nomination: None,
+        receivable_address_change_allowed_from: u64::MAX,
         time_delay: msg.time_delay,
         viewing_key: msg.viewing_key,
     };
@@ -39,6 +41,9 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     match msg {
         HandleMsg::ChangeAdmin {} => change_admin(deps, env),
         HandleMsg::NominateNewAdmin { address } => nominate_new_admin(deps, env, address),
+        HandleMsg::NominateNewReceivableAddress { address } => {
+            nominate_new_receivable_address(deps, env, address)
+        }
         HandleMsg::SendToken { amount, token } => send_token(deps, env, amount, token),
         HandleMsg::SetViewingKeyForSnip20 { token } => set_viewing_key_for_snip20(deps, token),
     }
@@ -105,6 +110,26 @@ fn nominate_new_admin<S: Storage, A: Api, Q: Querier>(
     })
 }
 
+fn nominate_new_receivable_address<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    address: Option<HumanAddr>,
+) -> StdResult<HandleResponse> {
+    let mut state = config_read(&deps.storage).load()?;
+    // Ensure that admin is calling this
+    authorize(state.admin.clone(), env.message.sender)?;
+
+    state.new_receivable_address_nomination = address;
+    state.receivable_address_change_allowed_from = env.block.time + state.time_delay;
+    config(&mut deps.storage).save(&state)?;
+
+    Ok(HandleResponse {
+        messages: vec![],
+        log: vec![],
+        data: None,
+    })
+}
+
 fn public_config<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
 ) -> StdResult<ConfigResponse> {
@@ -113,7 +138,10 @@ fn public_config<S: Storage, A: Api, Q: Querier>(
         admin: state.admin,
         admin_change_allowed_from: state.admin_change_allowed_from,
         new_admin_nomination: state.new_admin_nomination,
+        new_receivable_address_nomination: state.new_receivable_address_nomination,
         receivable_address: state.receivable_address,
+        receivable_address_change_allowed_from: state.receivable_address_change_allowed_from,
+        time_delay: state.time_delay,
         viewing_key: state.viewing_key,
     })
 }
@@ -296,6 +324,44 @@ mod tests {
     }
 
     #[test]
+    fn test_nominate_new_receivable_address() {
+        let (_init_result, mut deps) = init_helper();
+        let handle_msg = HandleMsg::NominateNewReceivableAddress {
+            address: Some(mock_user_address()),
+        };
+
+        // when nomination is made by a non-admin
+        let handle_result = handle(
+            &mut deps,
+            mock_env(mock_user_address(), &[]),
+            handle_msg.clone(),
+        );
+        assert_eq!(
+            handle_result.unwrap_err(),
+            StdError::Unauthorized { backtrace: None }
+        );
+
+        // when nomination is made by an admin
+        let handle_result = handle(&mut deps, mock_env(MOCK_ADMIN, &[]), handle_msg);
+        assert!(
+            handle_result.is_ok(),
+            "handle() failed: {}",
+            handle_result.err().unwrap()
+        );
+
+        let res = query(&deps, QueryMsg::Config {}).unwrap();
+        let value: ConfigResponse = from_binary(&res).unwrap();
+        assert_eq!(
+            value.new_receivable_address_nomination,
+            Some(mock_user_address())
+        );
+        assert_eq!(
+            value.receivable_address_change_allowed_from,
+            mock_env(MOCK_ADMIN, &[]).block.time + (60 * 60 * 24 * 5)
+        );
+    }
+
+    #[test]
     fn test_set_viewing_key_for_snip20() {
         let (_init_result, mut deps) = init_helper();
 
@@ -325,11 +391,15 @@ mod tests {
         let value: ConfigResponse = from_binary(&res).unwrap();
         assert_eq!(
             ConfigResponse {
-                admin: HumanAddr::from(MOCK_ADMIN),
-                admin_change_allowed_from: u64::MAX,
-                new_admin_nomination: None,
-                receivable_address: None,
-                viewing_key: "Do not hold on to possessions you no longer need.".to_string(),
+                admin: value.admin.clone(),
+                admin_change_allowed_from: value.admin_change_allowed_from,
+                new_admin_nomination: value.new_admin_nomination.clone(),
+                new_receivable_address_nomination: value.new_receivable_address_nomination.clone(),
+                receivable_address: value.receivable_address.clone(),
+                receivable_address_change_allowed_from: value
+                    .receivable_address_change_allowed_from,
+                time_delay: value.time_delay,
+                viewing_key: value.viewing_key.clone(),
             },
             value
         );
