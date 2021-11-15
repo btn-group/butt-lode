@@ -59,7 +59,7 @@ secretcli tx compute instantiate $CODE_ID "$INIT" --from a --label "profit-distr
 
 # Init BUTT lode
 CODE_ID=4
-INIT='{"viewing_key": "DoTheRightThing."}'
+INIT='{"time_delay": 432000, "viewing_key": "DoTheRightThing."}'
 secretcli tx compute instantiate $CODE_ID "$INIT" --from a --label "butt-lode" -y --keyring-backend test --gas 3000000 --gas-prices=3.0uscrt
 
 # Init address alias
