@@ -16,10 +16,44 @@
     {
       "type": "object",
       "required": [
+        "change_receivable_address"
+      ],
+      "properties": {
+        "change_receivable_address": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
         "nominate_new_admin"
       ],
       "properties": {
         "nominate_new_admin": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "nominate_new_receivable_address"
+      ],
+      "properties": {
+        "nominate_new_receivable_address": {
           "type": "object",
           "properties": {
             "address": {

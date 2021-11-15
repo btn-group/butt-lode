@@ -40,6 +40,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::ChangeAdmin {} => change_admin(deps, env),
+        HandleMsg::ChangeReceivableAddress {} => change_receivable_address(deps, env),
         HandleMsg::NominateNewAdmin { address } => nominate_new_admin(deps, env, address),
         HandleMsg::NominateNewReceivableAddress { address } => {
             nominate_new_receivable_address(deps, env, address)
@@ -81,6 +82,37 @@ fn change_admin<S: Storage, A: Api, Q: Querier>(
         }
     } else {
         return Err(StdError::generic_err(format!("No new admin nomination.")));
+    }
+
+    Ok(HandleResponse {
+        messages: vec![],
+        log: vec![],
+        data: None,
+    })
+}
+
+fn change_receivable_address<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> StdResult<HandleResponse> {
+    let mut state = config_read(&deps.storage).load()?;
+    // Ensure that nominated new admin is calling this
+    if state.new_receivable_address_nomination.is_some() {
+        authorize(state.admin.clone(), env.message.sender)?;
+
+        if env.block.time > state.receivable_address_change_allowed_from {
+            state.receivable_address = state.new_receivable_address_nomination.clone();
+            config(&mut deps.storage).save(&state)?;
+        } else {
+            return Err(StdError::generic_err(format!(
+                "Current time: {}. Receivable address change allowed from: {}.",
+                env.block.time, state.receivable_address_change_allowed_from
+            )));
+        }
+    } else {
+        return Err(StdError::generic_err(format!(
+            "No new receivable address nomination."
+        )));
     }
 
     Ok(HandleResponse {
@@ -286,6 +318,73 @@ mod tests {
         .unwrap();
         let state = config_read(&deps.storage).load().unwrap();
         assert_eq!(state.admin, mock_user_address());
+    }
+
+    #[test]
+    fn test_change_receivable_address() {
+        let (_init_result, mut deps) = init_helper();
+
+        // when there is no receivable address
+        // * it raises an error
+        let change_receivable_address_msg = HandleMsg::ChangeReceivableAddress {};
+        let handle_result = handle(
+            &mut deps,
+            mock_env(mock_user_address(), &[]),
+            change_receivable_address_msg.clone(),
+        );
+        assert_eq!(
+            handle_result.unwrap_err(),
+            StdError::generic_err(format!("No new receivable address nomination."))
+        );
+
+        // when there is a nominated receivable address
+        let handle_msg = HandleMsg::NominateNewReceivableAddress {
+            address: Some(mock_user_address()),
+        };
+        handle(&mut deps, mock_env(MOCK_ADMIN, &[]), handle_msg.clone()).unwrap();
+
+        // = when change of receivable address is called by a non-admin
+        // = * it raises an error
+        let handle_result = handle(
+            &mut deps,
+            mock_env(mock_user_address(), &[]),
+            change_receivable_address_msg.clone(),
+        );
+        assert_eq!(
+            handle_result.unwrap_err(),
+            StdError::Unauthorized { backtrace: None }
+        );
+
+        // = when called by admin
+        // == when it is not time to call the change of admin
+        // == * it raises an error
+        let handle_result = handle(
+            &mut deps,
+            mock_env(MOCK_ADMIN, &[]),
+            change_receivable_address_msg.clone(),
+        );
+        assert_eq!(
+            handle_result.unwrap_err(),
+            StdError::generic_err(format!(
+                "Current time: {}. Receivable address change allowed from: {}.",
+                1571797419,
+                1571797419 + 60 * 60 * 24 * 5
+            ))
+        );
+
+        // == when it is time to call the change of admin
+        let mut state = config_read(&deps.storage).load().unwrap();
+        state.receivable_address_change_allowed_from = 1571797419 - 1;
+        config(&mut deps.storage).save(&state).unwrap();
+        // == * it changes the admin
+        handle(
+            &mut deps,
+            mock_env(MOCK_ADMIN, &[]),
+            change_receivable_address_msg,
+        )
+        .unwrap();
+        let state = config_read(&deps.storage).load().unwrap();
+        assert_eq!(state.receivable_address, Some(mock_user_address()));
     }
 
     #[test]

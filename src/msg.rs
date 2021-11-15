@@ -14,6 +14,7 @@ pub struct InitMsg {
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
     ChangeAdmin {},
+    ChangeReceivableAddress {},
     NominateNewAdmin {
         address: Option<HumanAddr>,
     },
