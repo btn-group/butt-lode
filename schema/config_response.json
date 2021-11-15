@@ -5,6 +5,8 @@
   "required": [
     "admin",
     "admin_change_allowed_from",
+    "receivable_address_change_allowed_from",
+    "time_delay",
     "viewing_key"
   ],
   "properties": {
@@ -26,6 +28,16 @@
         }
       ]
     },
+    "new_receivable_address_nomination": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/HumanAddr"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "receivable_address": {
       "anyOf": [
         {
@@ -35,6 +47,16 @@
           "type": "null"
         }
       ]
+    },
+    "receivable_address_change_allowed_from": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "time_delay": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
     },
     "viewing_key": {
       "type": "string"
