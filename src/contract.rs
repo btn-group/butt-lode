@@ -18,7 +18,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         admin: env.message.sender,
         admin_change_allowed_from: u64::MAX,
         new_admin_nomination: None,
-        receivable_address: None,
+        receivable_address: msg.receivable_address,
         viewing_key: msg.viewing_key,
     };
 
@@ -174,6 +174,7 @@ mod tests {
         let env = mock_env(MOCK_ADMIN, &[]);
         let mut deps = mock_dependencies(20, &[]);
         let msg = InitMsg {
+            receivable_address: None,
             viewing_key: "Do not hold on to possessions you no longer need.".to_string(),
         };
         (init(&mut deps, env.clone(), msg), deps)

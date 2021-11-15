@@ -6,7 +6,22 @@
     "viewing_key"
   ],
   "properties": {
+    "receivable_address": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/HumanAddr"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "viewing_key": {
+      "type": "string"
+    }
+  },
+  "definitions": {
+    "HumanAddr": {
       "type": "string"
     }
   }
